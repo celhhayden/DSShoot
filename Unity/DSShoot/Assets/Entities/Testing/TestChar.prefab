@@ -44,3 +44,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   displayName: Willis
+  displayImage: {fileID: 21300000, guid: 6d9b4ca1ac8bfef40878352ff05c403a, type: 3}

@@ -10,13 +10,19 @@ public class DialogueManager : MonoBehaviour
     public DialogueNode currEntry;
     public TextMeshProUGUI textName;
     public TextMeshProUGUI textWindow;
+    public Image charImage;
+    // always empty, gets start coords for when displaying buttons
+    public GameObject buttonAnchor;
+    // how far apart each button should be placed
+    public float buttonSpacing = 30f;
+    // store buttons to be deleted later
+    private List<GameObject> buttonList;
 
     // Start is called before the first frame update
     void Start()
     {
-        // FOR TESTING
         StartDialogue();
-        //DisplayNext();
+        buttonList = new List<GameObject>();
     }
 
     void Update()
@@ -26,25 +32,28 @@ public class DialogueManager : MonoBehaviour
         {
             if (Input.GetMouseButtonDown(0))
             {
-                DisplayNext();
+                DisplayNext(0);
             }
         }
     }
 
-    // called when game is ready to being dialogue
+    // called when game is ready to begin dialogue
     public void StartDialogue()
     {
         textName.SetText(currEntry.line.character.displayName);
         textWindow.SetText(currEntry.line.text);
-        //Debug.Log("start sequence with " + currEntry.line.character.displayName);
-        //Debug.Log("saying: " + currEntry.line.text);
+        charImage.sprite = currEntry.line.character.displayImage;
     }
 
     // fetch the info from the next node in graph and display
-    public void DisplayNext()
+    public void DisplayNext(int index)
     {
-        // TODO add choice button indexing instead of const index
-        if (!currEntry.HasNext(0))
+        // destroy any live buttons from previous node
+        buttonList.ForEach(Destroy);
+        // make new list to ensure it's empty
+        buttonList = new List<GameObject>();
+
+        if (!currEntry.HasNext(index))
         {
             EndDialogue();
             return;
@@ -52,13 +61,41 @@ public class DialogueManager : MonoBehaviour
         else
         {
             // TODO account for choice nodes instead of const arg
-            currEntry = currEntry.GetNext(0);
+            currEntry = currEntry.GetNext(index);
 
+            // update texts with new current node info
             textName.SetText(currEntry.line.character.displayName);
             textWindow.SetText(currEntry.line.text);
+            charImage.sprite = currEntry.line.character.displayImage;
 
-            //Debug.Log("speaker: " + currEntry.line.character.displayName);
-            //Debug.Log("saying: " + currEntry.line.text);
+            // generate buttons if it's a choice node
+            if (currEntry is ChoiceNode)
+            {
+                // for every possible choice in this node, generate a button
+                int currButtons = 0;
+                foreach (ChoiceEntry choice in ((ChoiceNode)currEntry).choices)
+                {
+                    // generate a new button
+                    GameObject newButton = Instantiate(buttonAnchor, FindObjectOfType<Canvas>().transform);
+                    // space the buttons at constant distance vertically
+                    newButton.GetComponent<RectTransform>().position = new Vector3(newButton.GetComponent<RectTransform>().position.x,
+                        newButton.GetComponent<RectTransform>().position.y + currButtons * buttonSpacing,
+                        newButton.GetComponent<RectTransform>().position.z);
+
+                    // add the event to trigger to the button
+                    // weird behavior needs new int allocation each iteration, just copy the index
+                    int choiceIndex = currButtons;
+                    newButton.GetComponent<Button>().onClick.AddListener(delegate { DisplayNext(choiceIndex); });
+                    // set the button text to display per choice
+                    newButton.transform.GetChild(0).GetComponent<TextMeshProUGUI>().SetText(((ChoiceNode)currEntry).choices[choiceIndex].text);
+
+                    // add button to this manager's list to track for deletion later
+                    buttonList.Add(newButton);
+
+                    // incr track what button being looked at
+                    currButtons++;
+                }
+            }
         }
     }
 

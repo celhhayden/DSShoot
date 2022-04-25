@@ -7,5 +7,6 @@ public class CharacterProfile : MonoBehaviour
 {
     // the name of the character
     public string displayName;
-
+    // a single character image
+    public Sprite displayImage;
 }
