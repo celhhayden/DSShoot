@@ -42,6 +42,7 @@ public class DialogueManager : MonoBehaviour
     {
         textName.SetText(currEntry.line.character.displayName);
         textWindow.SetText(currEntry.line.text);
+        charImage.enabled = true;
         charImage.sprite = currEntry.line.character.displayImage;
     }
 
@@ -66,7 +67,13 @@ public class DialogueManager : MonoBehaviour
             // update texts with new current node info
             textName.SetText(currEntry.line.character.displayName);
             textWindow.SetText(currEntry.line.text);
-            charImage.sprite = currEntry.line.character.displayImage;
+            // if image sprite is null disable image display
+            if (currEntry.line.character.displayImage == null) charImage.enabled = false;
+            else
+            {
+                charImage.enabled = true;
+                charImage.sprite = currEntry.line.character.displayImage;
+            }
 
             // generate buttons if it's a choice node
             if (currEntry is ChoiceNode)
